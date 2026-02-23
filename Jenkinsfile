@@ -3,7 +3,9 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
     stage('Node Version') {
@@ -21,16 +23,13 @@ pipeline {
 
     stage('Test') {
       steps {
-        // If you don't have tests configured, this avoids failing the build.
         bat 'echo Skipping tests'
-        // Later enable:
-        // bat 'npm test'
       }
     }
   }
 
   post {
-    success { echo "✅ Build successful" }
-    failure { echo "❌ Build failed" }
+    success { echo '✅ SUCCESS' }
+    failure { echo '❌ FAILURE' }
   }
 }
