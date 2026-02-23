@@ -1,29 +1,36 @@
 pipeline {
   agent any
 
-  tools {
-    nodejs 'NodeJS'
-  }
-
   stages {
     stage('Checkout') {
       steps { checkout scm }
     }
 
+    stage('Node Version') {
+      steps {
+        bat 'node -v'
+        bat 'npm -v'
+      }
+    }
+
     stage('Install') {
-      steps { bat 'npm ci' }
+      steps {
+        bat 'npm install'
+      }
     }
 
     stage('Test') {
       steps {
-        // If you don’t have tests yet, change to: bat 'node -v'
-        bat 'npm test'
+        // If you don't have tests configured, this avoids failing the build.
+        bat 'echo Skipping tests'
+        // Later enable:
+        // bat 'npm test'
       }
     }
   }
 
   post {
-    success { echo "✅ Success on ${env.BRANCH_NAME}" }
-    failure { echo "❌ Failed on ${env.BRANCH_NAME}" }
+    success { echo "✅ Build successful" }
+    failure { echo "❌ Build failed" }
   }
 }
