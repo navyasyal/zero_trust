@@ -26,31 +26,43 @@ exports.register = async (req, res) => {
 };
 
 // LOGIN
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user.js");
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    const normalizedEmail = String(email).trim().toLowerCase();
 
+    // ✅ RULE: If email not in DB → deny access
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(403).json({ message: "Access denied. Email not registered." });
+    }
+
+    // ✅ Password check
+    // If your DB stores plain password, tell me — then we change this line.
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+    // ✅ Token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1d" }
     );
 
-    res.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        role: user.role
-      }
-    });
+    return res.json({ token });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
